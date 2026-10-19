@@ -39,7 +39,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test 'test/*.test.js'",
+    "test": "node --test test/analyze.test.js test/config.test.js test/cli.test.js",
     "lint": "node --check bin/audit-ratchet.js && for f in src/*.js; do node --check $f; done"
   },
   "peerDependencies": {
