@@ -1,0 +1,23 @@
+name: audit-ratchet
+description: Fail a PR when a mutation handler lacks a namespaced audit write, or when the committed baseline of known-unaudited handlers grows.
+branding: { icon: lock, color: gray-dark }
+inputs:
+  config:
+    description: Path to audit-ratchet.json
+    default: audit-ratchet.json
+  base-ref:
+    description: Base git ref for the growth check. Leave empty to skip it (for example on push events).
+    default: ${{ github.base_ref && format('origin/{0}', github.base_ref) || '' }}
+  version:
+    description: audit-ratchet version to run
+    default: "0.1.0"
+runs:
+  using: composite
+  steps:
+    - name: Check coverage against the baseline
+      shell: bash
+      run: npx --yes audit-ratchet@${{ inputs.version }} check --config "${{ inputs.config }}"
+    - name: Baseline must not grow
+      if: inputs.base-ref != ''
+      shell: bash
+      run: npx --yes audit-ratchet@${{ inputs.version }} growth --config "${{ inputs.config }}" --base "${{ inputs.base-ref }}"

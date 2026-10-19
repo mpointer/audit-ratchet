@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+  self-check:
+    # The package runs its own ratchet on its test fixture, through the
+    # composite action, so the action is exercised on every push.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node bin/audit-ratchet.js check --config example/audit-ratchet.json
+        working-directory: .
+      - run: node bin/audit-ratchet.js growth --config example/audit-ratchet.json --base "origin/${{ github.base_ref }}"
+        if: github.event_name == 'pull_request'

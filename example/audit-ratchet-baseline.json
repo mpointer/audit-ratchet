@@ -1,0 +1,7 @@
+{
+  "_comment": "Handlers with no admin./security.-namespaced audit write (example audit coverage). A handler ADDED here is new debt: CI compares this file against the PR base and fails on growth, so regenerating does not launder a regression past review. Regenerate with `audit-ratchet baseline`.",
+  "generatedFrom": "3 exported handlers under example/src/app/api/admin",
+  "unaudited": [
+    "example/src/app/api/admin/keys/route.ts::DELETE"
+  ]
+}

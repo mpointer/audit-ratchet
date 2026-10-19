@@ -1,0 +1,51 @@
+{
+  "name": "audit-ratchet",
+  "version": "0.1.0",
+  "description": "A coverage ratchet for mutation handlers: every exported handler under a directory must reach an audit sink with a namespaced action, or carry a justified exemption, and the list of known-unaudited handlers may shrink but never grow.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Mike Pointer <mpointer@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mpointer/audit-ratchet.git"
+  },
+  "homepage": "https://github.com/mpointer/audit-ratchet#readme",
+  "bugs": "https://github.com/mpointer/audit-ratchet/issues",
+  "keywords": [
+    "audit",
+    "ratchet",
+    "coverage",
+    "ci",
+    "typescript",
+    "ast",
+    "security",
+    "next.js"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "audit-ratchet": "bin/audit-ratchet.js"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "action.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test 'test/*.test.js'",
+    "lint": "node --check bin/audit-ratchet.js && for f in src/*.js; do node --check $f; done"
+  },
+  "peerDependencies": {
+    "typescript": ">=5 <7"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

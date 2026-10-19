@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "audit-ratchet config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "_comment": { "type": "string" },
+    "roots": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Directories scanned for handler modules." },
+    "fileName": { "type": ["string", "null"], "description": "Exact basename of handler modules, e.g. route.ts." },
+    "filePattern": { "type": ["string", "null"], "description": "Regex tested against the posix path relative to cwd; alternative or addition to fileName." },
+    "handlers": { "type": "array", "items": { "type": "string" }, "description": "Exported names treated as handlers." },
+    "sinks": { "type": "array", "items": { "type": "string" }, "description": "Function names that write an audit row, matched by name." },
+    "sinkModules": { "type": "array", "items": { "type": "string" }, "description": "Modules whose named exports count as sinks when called." },
+    "callerSuppliedAction": { "type": "array", "items": { "type": "string" }, "description": "Sinks that take a caller-supplied action and so still need a prefixed literal." },
+    "namespacingSinks": { "type": "array", "items": { "type": "string" }, "description": "Sinks that apply the namespace themselves." },
+    "tableInserts": { "type": "array", "items": { "type": "string" }, "description": "Table identifiers for which x.insert(<table>) counts as a sink." },
+    "actionPrefixes": { "type": "array", "items": { "type": "string" }, "description": "Action string prefixes that count as namespaced." },
+    "prefixConstants": { "type": "array", "items": { "type": "string" }, "description": "Identifiers that, opening a template literal, count as a prefix." },
+    "allowMarker": { "type": "string", "description": "Marker text that exempts a handler when inside a justified block comment." },
+    "minJustificationChars": { "type": "integer", "minimum": 0 },
+    "baseline": { "type": "string", "description": "Path of the committed baseline file." },
+    "label": { "type": "string", "description": "Name used in messages." },
+    "guidance": { "type": "array", "items": { "type": "string" }, "description": "Project-specific lines printed under a failure." }
+  }
+}

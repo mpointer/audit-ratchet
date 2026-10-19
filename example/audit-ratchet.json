@@ -1,0 +1,6 @@
+{
+  "roots": ["example/src/app/api/admin"],
+  "baseline": "example/audit-ratchet-baseline.json",
+  "label": "example audit coverage",
+  "guidance": ["This is the package's own example tree, used by CI to exercise the action."]
+}
