@@ -21,4 +21,15 @@ jobs:
           tag="${GITHUB_REF_NAME#v}"
           ver="$(node -p "require('./package.json').version")"
           [ "$tag" = "$ver" ] || { echo "tag $tag != package.json $ver"; exit 1; }
-      - run: npm publish --provenance --access public
+      - name: Skip when this version is already on npm (the first release is published by hand)
+        id: npm_exists
+        run: |
+          ver="$(node -p "require('./package.json').version")"
+          if npm view "audit-ratchet@$ver" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "audit-ratchet@$ver is already published; skipping"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.npm_exists.outputs.exists != 'true'
+        run: npm publish --provenance --access public
