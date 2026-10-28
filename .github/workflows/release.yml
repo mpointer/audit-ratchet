@@ -21,6 +21,7 @@ jobs:
           tag="${GITHUB_REF_NAME#v}"
           ver="$(node -p "require('./package.json').version")"
           [ "$tag" = "$ver" ] || { echo "tag $tag != package.json $ver"; exit 1; }
+          grep -q "default: \"$ver\"" action.yml || { echo "action.yml version default != $ver"; exit 1; }
       - name: Skip when this version is already on npm (the first release is published by hand)
         id: npm_exists
         run: |

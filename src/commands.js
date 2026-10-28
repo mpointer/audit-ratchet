@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { DEFAULTS, DEFAULT_CONFIG_PATH } from './config.js';
+import { DEFAULTS, DEFAULT_CONFIG_PATH, normalizeConfig } from './config.js';
 import { collectHandlers } from './collect.js';
 import { buildBaselinePayload, parseBaseline, compareToBaseline, compareBaselines } from './baseline.js';
 import { readFileAtRef, GitReadError } from './git.js';
@@ -74,17 +74,29 @@ export function runBaseline(cfg, { cwd = process.cwd(), out = console.log } = {}
   return 0;
 }
 
-export function runGrowth(cfg, baseRef, { cwd = process.cwd(), out = console.log, err = console.error } = {}) {
+export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd = process.cwd(), out = console.log, err = console.error } = {}) {
   if (!baseRef) {
     err('::error::Usage: audit-ratchet growth --base <ref>');
     return 1;
   }
+  // Read the baseline the BASE config names: a branch that points `baseline`
+  // at a new file would otherwise be compared against nothing.
+  let basePath = cfg.baseline;
+  try {
+    basePath = normalizeConfig(JSON.parse(readFileAtRef(baseRef, configPath, cwd))).baseline;
+  } catch (e) {
+    if (!(e instanceof GitReadError && e.missingPath)) {
+      err(`::error::${configPath} on ${baseRef}: ${e.message}`);
+      err('The job needs fetch-depth: 0 so the base ref is present.');
+      return 1;
+    }
+  }
   let baseJson;
   try {
-    baseJson = readFileAtRef(baseRef, cfg.baseline, cwd);
+    baseJson = readFileAtRef(baseRef, basePath, cwd);
   } catch (e) {
     if (e instanceof GitReadError && e.missingPath) {
-      out(`${cfg.baseline} does not exist on ${baseRef}; this change introduces it. OK.`);
+      out(`${basePath} does not exist on ${baseRef}; this change introduces it. OK.`);
       return 0;
     }
     err(`::error::${e.message}`);
@@ -93,7 +105,7 @@ export function runGrowth(cfg, baseRef, { cwd = process.cwd(), out = console.log
   }
   let base, head;
   try {
-    base = parseBaseline(baseJson, `${cfg.baseline} on ${baseRef}`);
+    base = parseBaseline(baseJson, `${basePath} on ${baseRef}`);
     head = parseBaseline(readFileSync(resolve(cwd, cfg.baseline), 'utf8'), `${cfg.baseline} on this branch`);
   } catch (e) {
     err(`::error::${e.message}`);

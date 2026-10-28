@@ -101,10 +101,29 @@ test('missing baseline, bad config, bad ref each fail with a named error', () =>
   assert.equal(run(dir, 'baseline').status, 0);
   const g = run(dir, 'growth', '--base', 'nope');
   assert.equal(g.status, 1);
-  assert.match(g.stderr, /could not read audit-ratchet-baseline\.json from nope/);
+  assert.match(g.stderr, /could not read audit-ratchet\.json from nope/);
+  assert.match(g.stderr, /fetch-depth: 0/);
   const g2 = run(dir, 'growth');
   assert.equal(g2.status, 1);
   assert.match(g2.stderr, /Usage/);
+});
+
+test('pointing the config at a new baseline path does not escape growth', () => {
+  const { dir, git } = repo();
+  writeFileSync(join(dir, 'audit-ratchet.json'), '{}');
+  assert.equal(run(dir, 'baseline').status, 0);
+  git('add', '-A');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'baseline');
+
+  mkdirSync(join(dir, 'src/app/api/admin/c'));
+  writeFileSync(join(dir, 'src/app/api/admin/c/route.ts'), `export const PUT = async () => {};\n`);
+  writeFileSync(join(dir, 'audit-ratchet.json'), '{"baseline": "elsewhere.json"}');
+  assert.equal(run(dir, 'baseline').status, 0);
+  assert.equal(run(dir, 'check').status, 0);
+  const g = run(dir, 'growth', '--base', 'main');
+  assert.equal(g.status, 1, g.stdout);
+  assert.match(g.stderr, /ADDS 1 handler\(s\) to elsewhere\.json/);
+  assert.match(g.stderr, /src\/app\/api\/admin\/c\/route\.ts::PUT/);
 });
 
 test('help and unknown command', () => {
