@@ -22,7 +22,7 @@
     "next.js"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "bin": {
     "audit-ratchet": "bin/audit-ratchet.js"
