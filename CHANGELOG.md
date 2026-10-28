@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Requires Node 22 or later (`engines`); Node 20 reached end of life in
+  April 2026 and is no longer tested.
+- CI and the README example use `actions/checkout@v5` and
+  `actions/setup-node@v5`, which run on the Node 24 runtime.
+
 ## [0.1.1] - 2026-10-28
 
 ### Fixed
