@@ -44,7 +44,7 @@ try {
     const cfg = loadConfig(opts.config ?? DEFAULT_CONFIG_PATH);
     if (cmd === 'check') code = runCheck(cfg);
     else if (cmd === 'baseline') code = runBaseline(cfg);
-    else if (cmd === 'growth') code = runGrowth(cfg, opts.base);
+    else if (cmd === 'growth') code = runGrowth(cfg, opts.base, { configPath: opts.config ?? DEFAULT_CONFIG_PATH });
     else { console.error(`Unknown command "${cmd}"\n\n${USAGE}`); code = 2; }
   }
 } catch (e) {

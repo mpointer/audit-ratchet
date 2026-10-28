@@ -37,7 +37,6 @@ export function analyzeSource(file, text, cfg) {
   const namespacing = new Set(cfg.namespacingSinks);
   const tables = new Set(cfg.tableInserts);
   const prefixConstants = new Set(cfg.prefixConstants);
-  const allowRe = new RegExp(`\\/\\*[\\s\\S]*?${escapeRegex(cfg.allowMarker)}[\\s\\S]*?\\*\\/`);
 
   const locals = new Map();
   const importedSinks = new Map();
@@ -112,7 +111,15 @@ export function analyzeSource(file, text, cfg) {
     if (isExported && ts.isVariableStatement(st)) {
       for (const d of st.declarationList.declarations) {
         if (ts.isIdentifier(d.name) && handlers.has(d.name.text) && d.initializer) {
-          exported.push({ stmt: st, name: d.name, body: d.initializer });
+          const target = ts.isIdentifier(d.initializer) ? locals.get(d.initializer.text) : null;
+          exported.push({ stmt: st, name: d.name, body: target ? (target.body ?? target) : d.initializer });
+        }
+        if (ts.isObjectBindingPattern(d.name) || ts.isArrayBindingPattern(d.name)) {
+          for (const el of d.name.elements) {
+            if (ts.isBindingElement(el) && ts.isIdentifier(el.name) && handlers.has(el.name.text)) {
+              exported.push({ stmt: st, name: el.name, body: null, unresolved: true });
+            }
+          }
         }
       }
     }
@@ -131,13 +138,12 @@ export function analyzeSource(file, text, cfg) {
   for (const { stmt, name, body, unresolved } of exported) {
     const method = name.text;
     const line = source.getLineAndCharacterOfPosition(name.getStart(source)).line + 1;
-    const withComments = text.slice(stmt.getFullStart(), stmt.getEnd());
-    const allow = withComments.match(allowRe);
+    const allow = blockComments(stmt, source).find((c) => c.includes(cfg.allowMarker));
     if (allow) {
       out.push({
         key: `${file}::${method}`, file, method, line,
         exempt: true, audited: true,
-        justified: hasJustification(allow[0], cfg),
+        justified: hasJustification(allow, cfg),
         reason: `exempted by ${cfg.allowMarker}`,
       });
       continue;
@@ -176,6 +182,20 @@ export function hasJustification(comment, cfg) {
   return prose.length >= cfg.minJustificationChars;
 }
 
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Every block comment in a statement's text, read from real trivia so code and strings never count. */
+function blockComments(stmt, source) {
+  const text = source.text;
+  const out = [];
+  const visit = (n) => {
+    // JsxText has no trivia: its pos is the text itself, which must never read as a comment.
+    if (n.getChildCount(source) === 0 && n.kind !== ts.SyntaxKind.JsxText) {
+      const ranges = [...(ts.getTrailingCommentRanges(text, n.pos) ?? []), ...(ts.getLeadingCommentRanges(text, n.pos) ?? [])];
+      for (const r of ranges) {
+        if (r.kind === ts.SyntaxKind.MultiLineCommentTrivia) out.push(text.slice(r.pos, r.end));
+      }
+    }
+    for (const c of n.getChildren(source)) visit(c);
+  };
+  visit(stmt);
+  return out;
 }

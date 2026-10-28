@@ -16,8 +16,10 @@ runs:
   steps:
     - name: Check coverage against the baseline
       shell: bash
-      run: npx --yes audit-ratchet@${{ inputs.version }} check --config "${{ inputs.config }}"
+      env: { CFG: "${{ inputs.config }}", VER: "${{ inputs.version }}" }
+      run: npx --yes "audit-ratchet@$VER" check --config "$CFG"
     - name: Baseline must not grow
       if: inputs.base-ref != ''
       shell: bash
-      run: npx --yes audit-ratchet@${{ inputs.version }} growth --config "${{ inputs.config }}" --base "${{ inputs.base-ref }}"
+      env: { CFG: "${{ inputs.config }}", VER: "${{ inputs.version }}", BASE: "${{ inputs.base-ref }}" }
+      run: npx --yes "audit-ratchet@$VER" growth --config "$CFG" --base "$BASE"

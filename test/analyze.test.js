@@ -132,6 +132,59 @@ export async function POST() {}`);
   assert.equal(h.audited, false);
 });
 
+test('a line comment marker does not exempt even with block comments around it', () => {
+  const h = one(`/** Creates a key. */
+export async function POST() {
+  // allow:audit-ratchet
+  /* x */
+  await db.insert(apiKeys);
+}`);
+  assert.equal(h.exempt, false);
+  assert.equal(h.audited, false);
+});
+
+test('a marker inside a string literal does not exempt', () => {
+  const h = one(`export async function POST() {
+  const s = '/* allow:audit-ratchet: this string is long enough to look like prose */';
+  await db.insert(apiKeys);
+}`);
+  assert.equal(h.exempt, false);
+});
+
+test('JSX text and template text that look like a marker do not exempt; a JSX comment does', () => {
+  const at = (src) => { const hs = analyzeSource('src/app/api/admin/x/route.tsx', src, cfg); assert.equal(hs.length, 1); return hs[0]; };
+  const fake = '/* allow:audit-ratchet: long enough text to look like a justification */';
+  assert.equal(at(`export async function POST() { return <p>${fake}</p>; }`).exempt, false);
+  assert.equal(at('export async function POST() { return `${a}' + fake + '${b}`; }').exempt, false);
+  const real = at(`export async function POST() { return <p>{${fake}}</p>; }`);
+  assert.equal(real.exempt, true);
+  assert.equal(real.justified, true);
+});
+
+test('a block comment on the same line as surrounding code still exempts', () => {
+  for (const src of [
+    'export async function POST() { /* allow:audit-ratchet: toggles a UI preference only, harmless. */ }',
+    'export const POST = async () => ok(/* allow:audit-ratchet: inline argument comment that is long enough */);',
+  ]) {
+    const h = one(src);
+    assert.equal(h.exempt, true, src);
+    assert.equal(h.justified, true, src);
+  }
+});
+
+test('a destructured handler export is reported, not skipped', () => {
+  const h = one(`const handlers = { POST: async () => db.delete(users) };
+export const { POST } = handlers;`);
+  assert.equal(h.audited, false);
+  assert.match(h.reason, /could not be resolved/);
+});
+
+test('export const POST = localFn resolves through the local function', () => {
+  const h = one(`async function impl() { await logAdminAction({}); }
+export const POST = impl;`);
+  assert.equal(h.audited, true);
+});
+
 test('marker inside the handler body exempts', () => {
   const h = one(`export async function POST() {
   /* allow:audit-ratchet: toggles a UI preference that is not security-relevant. */
