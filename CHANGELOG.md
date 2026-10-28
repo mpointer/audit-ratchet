@@ -10,6 +10,10 @@
   real error annotations (the job still fails on the exit code). Every write
   is now a single line, with breaks encoded as `%0D`/`%0A`. Present since
   0.1.0.
+- The justification check stripped comment delimiters with `/\*+\/$/`, which
+  is quadratic on a long run of `*`: one crafted exemption comment could
+  stall a CI run for minutes. Now linear. Present since 0.1.0. Found by
+  CodeQL.
 
 ### Changed
 - Handler modules default to `filePattern: "(^|/)route\\.[jt]sx?$"` instead
@@ -29,6 +33,7 @@
 ### Internal
 - CI, the release workflow and the README example use `actions/checkout@v7`
   and `actions/setup-node@v7`.
+- `ci.yml` declares `permissions: contents: read`.
 
 ## [0.2.0] - 2026-10-28
 
