@@ -108,7 +108,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - uses: mpointer/audit-ratchet@v0.1.0
+      - uses: mpointer/audit-ratchet@v0.1.1
 ```
 
 Or as two commands:
