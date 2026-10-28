@@ -13,7 +13,20 @@ import { readFileAtRef, GitReadError } from './git.js';
  * shows the reason inline.
  */
 
+/**
+ * Paths, baseline keys, module specifiers and git or config errors all come
+ * from the change under review. A line break inside one would start a new
+ * output line, and GitHub runs any line starting with `::` as a workflow
+ * command. So every write is exactly one line: breaks are encoded the way
+ * GitHub decodes them inside a command's message.
+ */
+export const oneLine = (write) => (line) => write(String(line).replace(/\r/g, '%0D').replace(/\n/g, '%0A'));
+
+/** A workflow-command property value (`file=...`), escaped per the Actions spec. */
+const prop = (s) => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A').replace(/:/g, '%3A').replace(/,/g, '%2C');
+
 export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = console.error, warn = console.warn } = {}) {
+  out = oneLine(out); err = oneLine(err); warn = oneLine(warn);
   const handlers = collectHandlers(cfg, cwd);
   let baselineKeys;
   try {
@@ -55,7 +68,7 @@ export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = co
 
   for (const rel of collectFiles(cfg, cwd)) {
     for (const s of starExports(rel, readFileSync(resolve(cwd, rel), 'utf8'))) {
-      warn(`::warning file=${rel},line=${s.line}::${rel}:${s.line} re-exports everything from '${s.specifier}'; ` +
+      warn(`::warning file=${prop(rel)},line=${s.line}::${rel}:${s.line} re-exports everything from '${s.specifier}'; ` +
         'handlers exported that way are not checked. Export them by name.');
     }
   }
@@ -73,6 +86,7 @@ export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = co
 }
 
 export function runBaseline(cfg, { cwd = process.cwd(), out = console.log } = {}) {
+  out = oneLine(out);
   const handlers = collectHandlers(cfg, cwd);
   const payload = buildBaselinePayload(handlers, cfg);
   writeFileSync(resolve(cwd, cfg.baseline), `${JSON.stringify(payload, null, 2)}\n`);
@@ -83,6 +97,7 @@ export function runBaseline(cfg, { cwd = process.cwd(), out = console.log } = {}
 }
 
 export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd = process.cwd(), out = console.log, err = console.error } = {}) {
+  out = oneLine(out); err = oneLine(err);
   if (!baseRef) {
     err('::error::Usage: audit-ratchet growth --base <ref>');
     return 1;
@@ -141,6 +156,7 @@ export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd 
 }
 
 export function runInit(path = DEFAULT_CONFIG_PATH, { cwd = process.cwd(), out = console.log, err = console.error } = {}) {
+  out = oneLine(out); err = oneLine(err);
   const full = resolve(cwd, path);
   if (existsSync(full)) {
     err(`::error::${path} already exists; delete it first if you want a fresh template.`);

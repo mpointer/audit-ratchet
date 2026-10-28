@@ -91,6 +91,18 @@ test('export * in a handler module warns with a file annotation', () => {
   assert.match(c.stderr, /::warning file=src\/app\/api\/admin\/b\/route\.ts,line=1::.*re-exports everything from '\.\/impl'/);
 });
 
+test('values from the tree or the baseline cannot start a workflow command', () => {
+  const { dir } = repo();
+  writeFileSync(join(dir, 'src/app/api/admin/b/route.ts'), `export * from './x\\n::error::injected-from-specifier';\n`);
+  writeFileSync(join(dir, 'audit-ratchet-baseline.json'),
+    JSON.stringify({ unaudited: ['gone::PUT\n::error::injected-from-baseline'] }));
+  const c = run(dir, 'check');
+  const lines = c.stderr.split('\n');
+  assert.ok(!lines.some((l) => l.startsWith('::error::injected')), c.stderr);
+  assert.match(c.stderr, /'\.\/x%0A::error::injected-from-specifier'/);
+  assert.match(c.stderr, /::warning::gone::PUT%0A::error::injected-from-baseline no longer exists/);
+});
+
 test('unjustified marker fails check', () => {
   const { dir } = repo();
   writeFileSync(join(dir, 'src/app/api/admin/b/route.ts'), `/* allow:audit-ratchet */\nexport async function DELETE() {}\n`);
