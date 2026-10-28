@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-10-28
 
 ### Changed
 - Requires Node 22 or later (`engines`); Node 20 reached end of life in
