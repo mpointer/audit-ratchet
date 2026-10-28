@@ -12,9 +12,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # 24, not 22: publishing with no token uses npm trusted publishing
+          # (OIDC), which needs npm >= 11.5.1. Node 22 bundles npm 10.
+          node-version: 24
           registry-url: https://registry.npmjs.org
       - run: npm ci
+      - run: npm run lint
       - run: npm test
       - name: Tag matches package version
         run: |

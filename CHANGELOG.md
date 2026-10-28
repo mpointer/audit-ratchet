@@ -17,7 +17,13 @@
 - The composite action passes its inputs through `env:` instead of
   interpolating them into the script.
 - The release workflow fails if `action.yml`'s default version does not match
-  the tag.
+  the tag, runs lint, and publishes from Node 24 (npm 11), which trusted
+  publishing requires.
+- CI runs the self-check through the composite action as well as `bin/`.
+
+### Docs
+- README: put the config, baseline and workflows behind CODEOWNERS, since a PR
+  can narrow what is checked without growing the baseline.
 
 ## [0.1.0] - 2026-10-19
 
