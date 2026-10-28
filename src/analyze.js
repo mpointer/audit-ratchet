@@ -187,7 +187,8 @@ function blockComments(stmt, source) {
   const text = source.text;
   const out = [];
   const visit = (n) => {
-    if (n.getChildCount(source) === 0) {
+    // JsxText has no trivia: its pos is the text itself, which must never read as a comment.
+    if (n.getChildCount(source) === 0 && n.kind !== ts.SyntaxKind.JsxText) {
       const ranges = [...(ts.getTrailingCommentRanges(text, n.pos) ?? []), ...(ts.getLeadingCommentRanges(text, n.pos) ?? [])];
       for (const r of ranges) {
         if (r.kind === ts.SyntaxKind.MultiLineCommentTrivia) out.push(text.slice(r.pos, r.end));
