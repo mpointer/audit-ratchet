@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2026-10-28
 
 ### Security
 - Output could carry workflow commands from the change under review. A line
