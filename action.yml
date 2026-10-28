@@ -10,7 +10,7 @@ inputs:
     default: ${{ github.base_ref && format('origin/{0}', github.base_ref) || '' }}
   version:
     description: audit-ratchet version to run
-    default: "0.1.0"
+    default: "0.1.1"
 # --prefix keeps npx from resolving against the caller's package.json: a
 # project that is itself named audit-ratchet (this repo) or that pins
 # another version would otherwise not get the version asked for.

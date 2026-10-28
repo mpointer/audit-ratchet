@@ -1,12 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.1] - 2026-10-28
 
 ### Fixed
 - An exemption could be forged: the marker was matched by a regex over the raw
   statement text that ran across `*/`, so a `//` marker followed by any block
-  comment, or a marker inside a string literal, exempted the handler and passed
-  the justification check. Exemptions are now read from real comment trivia.
+  comment, a marker inside a string literal, or JSX text in a `.tsx` handler,
+  exempted the handler and passed the justification check. Exemptions are now read from real comment trivia.
 - `growth` read the base ref's baseline at the path named in the branch's
   config, so pointing `baseline` at a new file passed any growth. It now uses
   the path from the base ref's config.
