@@ -20,6 +20,8 @@
   the tag, runs lint, and publishes from Node 24 (npm 11), which trusted
   publishing requires.
 - CI runs the self-check through the composite action as well as `bin/`.
+- The composite action runs `npx` from its own prefix, so the caller's
+  `package.json` cannot change which version runs.
 
 ### Docs
 - README: put the config, baseline and workflows behind CODEOWNERS, since a PR

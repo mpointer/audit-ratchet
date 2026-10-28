@@ -11,15 +11,18 @@ inputs:
   version:
     description: audit-ratchet version to run
     default: "0.1.0"
+# --prefix keeps npx from resolving against the caller's package.json: a
+# project that is itself named audit-ratchet (this repo) or that pins
+# another version would otherwise not get the version asked for.
 runs:
   using: composite
   steps:
     - name: Check coverage against the baseline
       shell: bash
       env: { CFG: "${{ inputs.config }}", VER: "${{ inputs.version }}" }
-      run: npx --yes "audit-ratchet@$VER" check --config "$CFG"
+      run: npx --yes --prefix "$RUNNER_TEMP/audit-ratchet" "audit-ratchet@$VER" check --config "$CFG"
     - name: Baseline must not grow
       if: inputs.base-ref != ''
       shell: bash
       env: { CFG: "${{ inputs.config }}", VER: "${{ inputs.version }}", BASE: "${{ inputs.base-ref }}" }
-      run: npx --yes "audit-ratchet@$VER" growth --config "$CFG" --base "$BASE"
+      run: npx --yes --prefix "$RUNNER_TEMP/audit-ratchet" "audit-ratchet@$VER" growth --config "$CFG" --base "$BASE"
