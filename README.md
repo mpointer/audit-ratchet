@@ -122,6 +122,22 @@ Or as two commands:
 Make the job a required status check on the branch you promote to, and
 do not rename it afterwards: GitHub matches required checks by name.
 
+Then put the config, the baseline and the workflow behind CODEOWNERS.
+`growth` compares the baseline against the base ref's, but nothing stops
+a PR from narrowing what is checked: dropping a name from `handlers`,
+shrinking `roots`, or deleting the CI step. Those edits are policy
+changes and need a reviewer who owns the policy:
+
+```
+# .github/CODEOWNERS
+/audit-ratchet.json             @your-org/security
+/audit-ratchet-baseline.json    @your-org/security
+/.github/workflows/             @your-org/security
+```
+
+CODEOWNERS only blocks a merge when branch protection requires code
+owner review.
+
 ## Exempt a handler
 
 ```ts

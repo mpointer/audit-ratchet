@@ -18,8 +18,10 @@ jobs:
       - run: npm run lint
       - run: npm test
   self-check:
-    # The package runs its own ratchet on its test fixture, through the
-    # composite action, so the action is exercised on every push.
+    # The package runs its own ratchet on its test fixture twice: from this
+    # checkout via bin/, and through the composite action. The action runs
+    # the npm release pinned in action.yml, so that step tests the action's
+    # plumbing, not this commit's code.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,3 +35,6 @@ jobs:
         working-directory: .
       - run: node bin/audit-ratchet.js growth --config example/audit-ratchet.json --base "origin/${{ github.base_ref }}"
         if: github.event_name == 'pull_request'
+      - uses: ./
+        with:
+          config: example/audit-ratchet.json
