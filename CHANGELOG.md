@@ -26,6 +26,10 @@
 - `growth`, when it fails, names removed entries for the same method, which
   is what a moved route looks like.
 
+### Internal
+- CI, the release workflow and the README example use `actions/checkout@v7`
+  and `actions/setup-node@v7`.
+
 ## [0.2.0] - 2026-10-28
 
 ### Changed
