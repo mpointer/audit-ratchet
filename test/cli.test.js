@@ -82,6 +82,15 @@ test('init, baseline, check, growth: the whole loop', () => {
   assert.match(c4.stderr, /::warning::src\/app\/api\/admin\/b\/route\.ts::DELETE now writes an audit row/);
 });
 
+test('export * in a handler module warns with a file annotation', () => {
+  const { dir } = repo();
+  writeFileSync(join(dir, 'src/app/api/admin/b/route.ts'), `export * from './impl';\n`);
+  assert.equal(run(dir, 'baseline').status, 0);
+  const c = run(dir, 'check');
+  assert.equal(c.status, 0, c.stderr);
+  assert.match(c.stderr, /::warning file=src\/app\/api\/admin\/b\/route\.ts,line=1::.*re-exports everything from '\.\/impl'/);
+});
+
 test('unjustified marker fails check', () => {
   const { dir } = repo();
   writeFileSync(join(dir, 'src/app/api/admin/b/route.ts'), `/* allow:audit-ratchet */\nexport async function DELETE() {}\n`);

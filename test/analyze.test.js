@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeSource, normalizeConfig, compareToBaseline, compareBaselines, hasJustification } from '../src/index.js';
+import { analyzeSource, starExports, normalizeConfig, compareToBaseline, compareBaselines, hasJustification } from '../src/index.js';
 
 const cfg = normalizeConfig({ allowMarker: 'allow:audit-ratchet', sinkModules: ['@/lib/audit', '@/lib/authz-audit'] });
 const one = (text, c = cfg) => {
@@ -183,6 +183,13 @@ test('export const POST = localFn resolves through the local function', () => {
   const h = one(`async function impl() { await logAdminAction({}); }
 export const POST = impl;`);
   assert.equal(h.audited, true);
+});
+
+test('starExports finds export * from, and ignores namespace and type-only forms', () => {
+  assert.deepEqual(starExports('r.ts', `export * from './impl';
+export * as ns from './ns';
+export type * from './types';
+export { POST } from './named';`), [{ specifier: './impl', line: 1 }]);
 });
 
 test('marker inside the handler body exempts', () => {

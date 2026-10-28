@@ -163,6 +163,10 @@ wrapped by a higher-order function from another module
 audit inside the wrapper's own module is invisible and the route needs
 the exemption.
 
+It cannot see through `export * from './impl'`. `check` warns about each
+one, with a file and line annotation, rather than failing: the module may
+export only reads. Export handlers by name and they are checked.
+
 It is TypeScript and JavaScript only, and it answers one question:
 does this handler leave a namespaced audit row. It is not a linter.
 

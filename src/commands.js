@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DEFAULTS, DEFAULT_CONFIG_PATH, normalizeConfig } from './config.js';
-import { collectHandlers } from './collect.js';
+import { collectFiles, collectHandlers } from './collect.js';
+import { starExports } from './analyze.js';
 import { buildBaselinePayload, parseBaseline, compareToBaseline, compareBaselines } from './baseline.js';
 import { readFileAtRef, GitReadError } from './git.js';
 
@@ -52,6 +53,12 @@ export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = co
     err('The marker is not the justification.');
   }
 
+  for (const rel of collectFiles(cfg, cwd)) {
+    for (const s of starExports(rel, readFileSync(resolve(cwd, rel), 'utf8'))) {
+      warn(`::warning file=${rel},line=${s.line}::${rel}:${s.line} re-exports everything from '${s.specifier}'; ` +
+        'handlers exported that way are not checked. Export them by name.');
+    }
+  }
   for (const k of r.nowFixed) warn(`::warning::${k} now writes an audit row. Drop it from ${cfg.baseline}.`);
   for (const k of r.nowExempt) warn(`::warning::${k} is now exempt. Drop it from ${cfg.baseline}.`);
   for (const k of r.stale) warn(`::warning::${k} no longer exists. Drop it from ${cfg.baseline}.`);
