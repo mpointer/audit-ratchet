@@ -219,10 +219,11 @@ test('compareToBaseline: the four outcomes', () => {
     { key: 'd::POST', audited: true, exempt: true, justified: false },
     { key: 'e::POST', audited: true, exempt: true, justified: true },
   ];
-  const r = compareToBaseline(hs, ['c::POST', 'a::POST', 'gone::PUT']);
+  const r = compareToBaseline(hs, ['c::POST', 'a::POST', 'gone::PUT', 'd::POST', 'e::POST']);
   assert.deepEqual(r.newlyUnaudited.map((h) => h.key), ['b::POST']);
   assert.deepEqual(r.unjustifiedExemptions.map((h) => h.key), ['d::POST']);
   assert.deepEqual(r.nowFixed, ['a::POST']);
+  assert.deepEqual(r.nowExempt, ['e::POST'], 'an unjustified exemption already fails; it is not reported twice');
   assert.deepEqual(r.stale, ['gone::PUT']);
   assert.equal(r.auditedCount, 1);
   assert.equal(r.exemptCount, 2);

@@ -64,6 +64,9 @@ test('init, baseline, check, growth: the whole loop', () => {
   // A justified exemption instead: check green, baseline shrinks, growth fine.
   writeFileSync(join(dir, 'src/app/api/admin/c/route.ts'),
     `/* allow:audit-ratchet: clears a per-user cache; nothing security-relevant is written. */\nexport const PUT = async () => {};\n`);
+  const cx = run(dir, 'check');
+  assert.equal(cx.status, 0, cx.stderr);
+  assert.match(cx.stderr, /::warning::src\/app\/api\/admin\/c\/route\.ts::PUT is now exempt/);
   assert.equal(run(dir, 'baseline').status, 0);
   const c3 = run(dir, 'check');
   assert.equal(c3.status, 0, c3.stderr);

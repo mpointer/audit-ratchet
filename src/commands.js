@@ -53,8 +53,9 @@ export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = co
   }
 
   for (const k of r.nowFixed) warn(`::warning::${k} now writes an audit row. Drop it from ${cfg.baseline}.`);
+  for (const k of r.nowExempt) warn(`::warning::${k} is now exempt. Drop it from ${cfg.baseline}.`);
   for (const k of r.stale) warn(`::warning::${k} no longer exists. Drop it from ${cfg.baseline}.`);
-  if (r.nowFixed.length > 0 || r.stale.length > 0) warn('Tighten the ratchet: `audit-ratchet baseline`.');
+  if (r.nowFixed.length > 0 || r.nowExempt.length > 0 || r.stale.length > 0) warn('Tighten the ratchet: `audit-ratchet baseline`.');
 
   if (failed) return 1;
   out(
