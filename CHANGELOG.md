@@ -1,5 +1,31 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+- Output could carry workflow commands from the change under review. A line
+  break in a baseline key, a module specifier, or a git or config error
+  started a new output line, and GitHub Actions runs any line beginning with
+  `::` as a command: fake annotations, or `::stop-commands::` to hide the
+  real error annotations (the job still fails on the exit code). Every write
+  is now a single line, with breaks encoded as `%0D`/`%0A`. Present since
+  0.1.0.
+
+### Changed
+- Handler modules default to `filePattern: "(^|/)route\\.[jt]sx?$"` instead
+  of `fileName: "route.ts"`, so `route.js`, `route.tsx` and `route.jsx` are
+  checked too. **Upgrading can surface handlers that were never checked.** A
+  config that sets `fileName` keeps exactly that file; configs written by
+  `init` do.
+
+### Added
+- `check` warns, with a file and line annotation, on `export * from` in a
+  handler module: handlers re-exported that way are not checked.
+- `check` warns when a baselined handler now carries a justified exemption,
+  so the baseline entry can go.
+- `growth`, when it fails, names removed entries for the same method, which
+  is what a moved route looks like.
+
 ## [0.2.0] - 2026-10-28
 
 ### Changed

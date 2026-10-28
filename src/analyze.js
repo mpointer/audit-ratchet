@@ -170,6 +170,22 @@ function calleeName(call) {
   return '';
 }
 
+/**
+ * `export * from '<module>'` statements. They can re-export handlers that
+ * analyzeSource cannot see, so check warns about them instead of passing
+ * the module silently. `export * as ns` and `export type *` export no handler.
+ */
+export function starExports(file, text) {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  return source.statements
+    .filter((st) => ts.isExportDeclaration(st) && !st.exportClause && !st.isTypeOnly &&
+      st.moduleSpecifier && ts.isStringLiteral(st.moduleSpecifier))
+    .map((st) => ({
+      specifier: st.moduleSpecifier.text,
+      line: source.getLineAndCharacterOfPosition(st.getStart(source)).line + 1,
+    }));
+}
+
 /** Strip delimiters, JSDoc asterisks and the marker; what remains must be prose. */
 export function hasJustification(comment, cfg) {
   const prose = comment

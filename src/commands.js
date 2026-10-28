@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DEFAULTS, DEFAULT_CONFIG_PATH, normalizeConfig } from './config.js';
-import { collectHandlers } from './collect.js';
+import { collectFiles, collectHandlers } from './collect.js';
+import { starExports } from './analyze.js';
 import { buildBaselinePayload, parseBaseline, compareToBaseline, compareBaselines } from './baseline.js';
 import { readFileAtRef, GitReadError } from './git.js';
 
@@ -12,7 +13,20 @@ import { readFileAtRef, GitReadError } from './git.js';
  * shows the reason inline.
  */
 
+/**
+ * Paths, baseline keys, module specifiers and git or config errors all come
+ * from the change under review. A line break inside one would start a new
+ * output line, and GitHub runs any line starting with `::` as a workflow
+ * command. So every write is exactly one line: breaks are encoded the way
+ * GitHub decodes them inside a command's message.
+ */
+export const oneLine = (write) => (line) => write(String(line).replace(/\r/g, '%0D').replace(/\n/g, '%0A'));
+
+/** A workflow-command property value (`file=...`), escaped per the Actions spec. */
+const prop = (s) => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A').replace(/:/g, '%3A').replace(/,/g, '%2C');
+
 export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = console.error, warn = console.warn } = {}) {
+  out = oneLine(out); err = oneLine(err); warn = oneLine(warn);
   const handlers = collectHandlers(cfg, cwd);
   let baselineKeys;
   try {
@@ -52,9 +66,16 @@ export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = co
     err('The marker is not the justification.');
   }
 
+  for (const rel of collectFiles(cfg, cwd)) {
+    for (const s of starExports(rel, readFileSync(resolve(cwd, rel), 'utf8'))) {
+      warn(`::warning file=${prop(rel)},line=${s.line}::${rel}:${s.line} re-exports everything from '${s.specifier}'; ` +
+        'handlers exported that way are not checked. Export them by name.');
+    }
+  }
   for (const k of r.nowFixed) warn(`::warning::${k} now writes an audit row. Drop it from ${cfg.baseline}.`);
+  for (const k of r.nowExempt) warn(`::warning::${k} is now exempt. Drop it from ${cfg.baseline}.`);
   for (const k of r.stale) warn(`::warning::${k} no longer exists. Drop it from ${cfg.baseline}.`);
-  if (r.nowFixed.length > 0 || r.stale.length > 0) warn('Tighten the ratchet: `audit-ratchet baseline`.');
+  if (r.nowFixed.length > 0 || r.nowExempt.length > 0 || r.stale.length > 0) warn('Tighten the ratchet: `audit-ratchet baseline`.');
 
   if (failed) return 1;
   out(
@@ -65,6 +86,7 @@ export function runCheck(cfg, { cwd = process.cwd(), out = console.log, err = co
 }
 
 export function runBaseline(cfg, { cwd = process.cwd(), out = console.log } = {}) {
+  out = oneLine(out);
   const handlers = collectHandlers(cfg, cwd);
   const payload = buildBaselinePayload(handlers, cfg);
   writeFileSync(resolve(cwd, cfg.baseline), `${JSON.stringify(payload, null, 2)}\n`);
@@ -75,6 +97,7 @@ export function runBaseline(cfg, { cwd = process.cwd(), out = console.log } = {}
 }
 
 export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd = process.cwd(), out = console.log, err = console.error } = {}) {
+  out = oneLine(out); err = oneLine(err);
   if (!baseRef) {
     err('::error::Usage: audit-ratchet growth --base <ref>');
     return 1;
@@ -117,6 +140,17 @@ export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd 
     err('');
     for (const k of r.added) err(`  ${k}`);
     err('');
+    const method = (k) => k.slice(k.lastIndexOf('::') + 2);
+    const moved = r.removed.filter((k) => r.added.some((a) => method(a) === method(k)));
+    if (moved.length > 0) {
+      err(`It also removes ${moved.length} entr${moved.length === 1 ? 'y' : 'ies'} for the same method:`);
+      err('');
+      for (const k of moved) err(`  ${k}`);
+      err('');
+      err('If a route moved, its key moved with it, and a new path is new debt to the ratchet.');
+      err('Pay it at the new path: an audit write, or a justified exemption.');
+      err('');
+    }
     err('The baseline records debt that predates the rule; it is not a place to put new');
     err('debt. Give these handlers an audit write instead. If a mutation genuinely is not');
     err(`security-relevant, exempt it at the handler with a block comment containing`);
@@ -133,6 +167,7 @@ export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd 
 }
 
 export function runInit(path = DEFAULT_CONFIG_PATH, { cwd = process.cwd(), out = console.log, err = console.error } = {}) {
+  out = oneLine(out); err = oneLine(err);
   const full = resolve(cwd, path);
   if (existsSync(full)) {
     err(`::error::${path} already exists; delete it first if you want a fresh template.`);

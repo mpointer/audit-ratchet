@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { loadConfig, ConfigError, DEFAULT_CONFIG_PATH } from '../src/config.js';
-import { runCheck, runBaseline, runGrowth, runInit } from '../src/commands.js';
+import { runCheck, runBaseline, runGrowth, runInit, oneLine } from '../src/commands.js';
 
 const USAGE = `audit-ratchet <command> [options]
 
@@ -48,7 +48,8 @@ try {
     else { console.error(`Unknown command "${cmd}"\n\n${USAGE}`); code = 2; }
   }
 } catch (e) {
-  if (e instanceof ConfigError) { console.error(`::error::config: ${e.message}`); code = 1; }
-  else { console.error(`::error::${e.message}`); code = 1; }
+  const err = oneLine(console.error);
+  if (e instanceof ConfigError) { err(`::error::config: ${e.message}`); code = 1; }
+  else { err(`::error::${e.message}`); code = 1; }
 }
 process.exit(code);

@@ -29,6 +29,7 @@ export function parseBaseline(json, where = 'baseline') {
  *   newlyUnaudited         a handler not in the baseline writes no namespaced row: FAIL
  *   unjustifiedExemptions  a marker with no prose: FAIL
  *   nowFixed               a baselined handler now audits: WARN, tighten the baseline
+ *   nowExempt              a baselined handler now carries a justified exemption: WARN, tighten
  *   stale                  a baselined handler no longer exists: WARN, tighten
  *
  * Improvements warn rather than fail on purpose: failing a PR for
@@ -38,11 +39,13 @@ export function parseBaseline(json, where = 'baseline') {
 export function compareToBaseline(handlers, baselineKeys) {
   const baseline = new Set(baselineKeys);
   const auditedKeys = new Set(handlers.filter((h) => h.audited && !h.exempt).map((h) => h.key));
+  const exemptKeys = new Set(handlers.filter((h) => h.exempt && h.justified).map((h) => h.key));
   const liveKeys = new Set(handlers.map((h) => h.key));
   return {
     newlyUnaudited: handlers.filter((h) => !h.audited && !baseline.has(h.key)),
     unjustifiedExemptions: handlers.filter((h) => h.exempt && !h.justified),
     nowFixed: [...baseline].filter((k) => auditedKeys.has(k)).sort(),
+    nowExempt: [...baseline].filter((k) => exemptKeys.has(k)).sort(),
     stale: [...baseline].filter((k) => !liveKeys.has(k)).sort(),
     auditedCount: auditedKeys.size,
     exemptCount: handlers.filter((h) => h.exempt).length,

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeSource, normalizeConfig, compareToBaseline, compareBaselines, hasJustification } from '../src/index.js';
+import { analyzeSource, starExports, normalizeConfig, compareToBaseline, compareBaselines, hasJustification } from '../src/index.js';
 
 const cfg = normalizeConfig({ allowMarker: 'allow:audit-ratchet', sinkModules: ['@/lib/audit', '@/lib/authz-audit'] });
 const one = (text, c = cfg) => {
@@ -185,6 +185,13 @@ export const POST = impl;`);
   assert.equal(h.audited, true);
 });
 
+test('starExports finds export * from, and ignores namespace and type-only forms', () => {
+  assert.deepEqual(starExports('r.ts', `export * from './impl';
+export * as ns from './ns';
+export type * from './types';
+export { POST } from './named';`), [{ specifier: './impl', line: 1 }]);
+});
+
 test('marker inside the handler body exempts', () => {
   const h = one(`export async function POST() {
   /* allow:audit-ratchet: toggles a UI preference that is not security-relevant. */
@@ -219,10 +226,11 @@ test('compareToBaseline: the four outcomes', () => {
     { key: 'd::POST', audited: true, exempt: true, justified: false },
     { key: 'e::POST', audited: true, exempt: true, justified: true },
   ];
-  const r = compareToBaseline(hs, ['c::POST', 'a::POST', 'gone::PUT']);
+  const r = compareToBaseline(hs, ['c::POST', 'a::POST', 'gone::PUT', 'd::POST', 'e::POST']);
   assert.deepEqual(r.newlyUnaudited.map((h) => h.key), ['b::POST']);
   assert.deepEqual(r.unjustifiedExemptions.map((h) => h.key), ['d::POST']);
   assert.deepEqual(r.nowFixed, ['a::POST']);
+  assert.deepEqual(r.nowExempt, ['e::POST'], 'an unjustified exemption already fails; it is not reported twice');
   assert.deepEqual(r.stale, ['gone::PUT']);
   assert.equal(r.auditedCount, 1);
   assert.equal(r.exemptCount, 2);

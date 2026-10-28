@@ -9,8 +9,8 @@ import { resolve } from 'node:path';
  */
 export const DEFAULTS = Object.freeze({
   roots: ['src/app/api/admin'],
-  fileName: 'route.ts',
-  filePattern: null,
+  fileName: null,
+  filePattern: '(^|/)route\\.[jt]sx?$',
   handlers: ['POST', 'PUT', 'PATCH', 'DELETE'],
   sinks: ['logAdminAction', 'logAudit', 'writeAudit'],
   sinkModules: ['@/lib/audit'],
@@ -44,6 +44,8 @@ export function normalizeConfig(raw = {}) {
     }
   }
   const cfg = { ...DEFAULTS, ...raw };
+  // An explicit fileName means exactly that file, not that file plus the default pattern.
+  if ('fileName' in raw && !('filePattern' in raw)) cfg.filePattern = null;
   for (const key of ARRAY_KEYS) {
     if (!Array.isArray(cfg[key]) || cfg[key].some((v) => typeof v !== 'string')) {
       throw new ConfigError(`"${key}" must be an array of strings`);

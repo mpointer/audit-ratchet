@@ -47,6 +47,11 @@ tell new debt from old.
 fails on any key the branch added. Shrinking is always fine. That is the
 half that makes "the list only shrinks" true rather than aspirational.
 
+Keys are `path::METHOD`, so moving a baselined route adds a key and
+`growth` fails. That is deliberate: the ratchet cannot tell a move from
+new debt, and a move is a cheap moment to pay it. The failure names the
+removed entry with the same method, so the cause is plain.
+
 Improvements warn rather than fail: a baselined handler that now audits,
 or one whose route was renamed away, prints a notice asking you to
 tighten. Failing a PR for improving coverage teaches contributors that
@@ -73,8 +78,8 @@ was extracted from.
 | Key | Default | Meaning |
 |-----|---------|---------|
 | `roots` | `["src/app/api/admin"]` | Directories scanned for handler modules |
-| `fileName` | `"route.ts"` | Exact basename of handler modules |
-| `filePattern` | `null` | Regex on the posix path relative to cwd, instead of or as well as `fileName` |
+| `fileName` | `null` | Exact basename of handler modules. Setting it alone replaces the default `filePattern` |
+| `filePattern` | `"(^\|/)route\\.[jt]sx?$"` | Regex on the posix path relative to cwd, instead of or as well as `fileName`. The default matches `route.ts`, `.tsx`, `.js` and `.jsx` |
 | `handlers` | `["POST","PUT","PATCH","DELETE"]` | Exported names treated as handlers (function, const, or `export { x as POST }`) |
 | `sinks` | `["logAdminAction","logAudit","writeAudit"]` | Functions that write an audit row, matched by name |
 | `sinkModules` | `["@/lib/audit"]` | Modules whose named exports count as sinks when called |
@@ -162,6 +167,10 @@ wrapped by a higher-order function from another module
 (`export const POST = withAuth(fn)`) is scanned through the call, so an
 audit inside the wrapper's own module is invisible and the route needs
 the exemption.
+
+It cannot see through `export * from './impl'`. `check` warns about each
+one, with a file and line annotation, rather than failing: the module may
+export only reads. Export handlers by name and they are checked.
 
 It is TypeScript and JavaScript only, and it answers one question:
 does this handler leave a namespaced audit row. It is not a linter.
