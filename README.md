@@ -73,8 +73,8 @@ was extracted from.
 | Key | Default | Meaning |
 |-----|---------|---------|
 | `roots` | `["src/app/api/admin"]` | Directories scanned for handler modules |
-| `fileName` | `"route.ts"` | Exact basename of handler modules |
-| `filePattern` | `null` | Regex on the posix path relative to cwd, instead of or as well as `fileName` |
+| `fileName` | `null` | Exact basename of handler modules. Setting it alone replaces the default `filePattern` |
+| `filePattern` | `"(^\|/)route\\.[jt]sx?$"` | Regex on the posix path relative to cwd, instead of or as well as `fileName`. The default matches `route.ts`, `.tsx`, `.js` and `.jsx` |
 | `handlers` | `["POST","PUT","PATCH","DELETE"]` | Exported names treated as handlers (function, const, or `export { x as POST }`) |
 | `sinks` | `["logAdminAction","logAudit","writeAudit"]` | Functions that write an audit row, matched by name |
 | `sinkModules` | `["@/lib/audit"]` | Modules whose named exports count as sinks when called |
