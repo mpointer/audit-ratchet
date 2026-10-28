@@ -20,9 +20,9 @@ runs:
     - name: Check coverage against the baseline
       shell: bash
       env: { CFG: "${{ inputs.config }}", VER: "${{ inputs.version }}" }
-      run: npx --yes --prefix "$RUNNER_TEMP/audit-ratchet" "audit-ratchet@$VER" check --config "$CFG"
+      run: mkdir -p "$RUNNER_TEMP/audit-ratchet" && npx --yes --prefix "$RUNNER_TEMP/audit-ratchet" "audit-ratchet@$VER" check --config "$CFG"
     - name: Baseline must not grow
       if: inputs.base-ref != ''
       shell: bash
       env: { CFG: "${{ inputs.config }}", VER: "${{ inputs.version }}", BASE: "${{ inputs.base-ref }}" }
-      run: npx --yes --prefix "$RUNNER_TEMP/audit-ratchet" "audit-ratchet@$VER" growth --config "$CFG" --base "$BASE"
+      run: mkdir -p "$RUNNER_TEMP/audit-ratchet" && npx --yes --prefix "$RUNNER_TEMP/audit-ratchet" "audit-ratchet@$VER" growth --config "$CFG" --base "$BASE"
