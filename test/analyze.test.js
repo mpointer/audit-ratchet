@@ -206,6 +206,15 @@ test('hasJustification strips JSDoc asterisks and the marker', () => {
   assert.equal(hasJustification('/**\n * allow:audit-ratchet\n * Read-only preview that writes nothing.\n */', cfg), true);
 });
 
+test('hasJustification is linear on a long run of asterisks', () => {
+  const comment = `/* allow:audit-ratchet ${'*'.repeat(200_000)}x */`;
+  const t = performance.now();
+  hasJustification(comment, cfg);
+  assert.ok(performance.now() - t < 1000, 'a quadratic strip takes tens of seconds here');
+  assert.equal(hasJustification('/**/', cfg), false);
+  assert.equal(hasJustification('/*** allow:audit-ratchet: a reason that is long enough to count ***/', cfg), true);
+});
+
 test('config: custom handlers, sinks, prefixes, and marker all apply', () => {
   const c = normalizeConfig({
     handlers: ['handler'], sinks: ['recordEvent'], namespacingSinks: [], tableInserts: [],

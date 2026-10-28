@@ -188,9 +188,13 @@ export function starExports(file, text) {
 
 /** Strip delimiters, JSDoc asterisks and the marker; what remains must be prose. */
 export function hasJustification(comment, cfg) {
-  const prose = comment
-    .replace(/^\/\*+/, '')
-    .replace(/\*+\/$/, '')
+  // Index loops, not /\*+\/$/: that regex is quadratic on a long run of `*`,
+  // and the comment comes from the change under review.
+  let start = comment.startsWith('/*') ? 2 : 0;
+  let end = comment.endsWith('*/') && comment.length - 2 >= start ? comment.length - 2 : comment.length;
+  while (start < end && comment[start] === '*') start++;
+  while (end > start && comment[end - 1] === '*') end--;
+  const prose = comment.slice(start, end)
     .split(cfg.allowMarker).join('')
     .replace(/^[\s*]+/gm, '')
     .replace(/[-\s]+/g, ' ')
