@@ -1,6 +1,6 @@
 {
   "name": "audit-ratchet",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A coverage ratchet for mutation handlers: every exported handler under a directory must reach an audit sink with a namespaced action, or carry a justified exemption, and the list of known-unaudited handlers may shrink but never grow.",
   "type": "module",
   "license": "MIT",
