@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -89,6 +89,23 @@ test('export * in a handler module warns with a file annotation', () => {
   const c = run(dir, 'check');
   assert.equal(c.status, 0, c.stderr);
   assert.match(c.stderr, /::warning file=src\/app\/api\/admin\/b\/route\.ts,line=1::.*re-exports everything from '\.\/impl'/);
+});
+
+test('growth names the removed entry when a baselined route moves', () => {
+  const { dir, git } = repo();
+  writeFileSync(join(dir, 'audit-ratchet.json'), '{}');
+  assert.equal(run(dir, 'baseline').status, 0);
+  git('add', '-A');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'baseline');
+
+  mkdirSync(join(dir, 'src/app/api/admin/moved'));
+  renameSync(join(dir, 'src/app/api/admin/b/route.ts'), join(dir, 'src/app/api/admin/moved/route.ts'));
+  assert.equal(run(dir, 'baseline').status, 0);
+  const g = run(dir, 'growth', '--base', 'main');
+  assert.equal(g.status, 1);
+  assert.match(g.stderr, /ADDS 1 handler\(s\)[\s\S]*moved\/route\.ts::DELETE/);
+  assert.match(g.stderr, /also removes 1 entry for the same method:\s+src\/app\/api\/admin\/b\/route\.ts::DELETE/);
+  assert.match(g.stderr, /If a route moved/);
 });
 
 test('values from the tree or the baseline cannot start a workflow command', () => {

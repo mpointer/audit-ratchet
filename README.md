@@ -47,6 +47,11 @@ tell new debt from old.
 fails on any key the branch added. Shrinking is always fine. That is the
 half that makes "the list only shrinks" true rather than aspirational.
 
+Keys are `path::METHOD`, so moving a baselined route adds a key and
+`growth` fails. That is deliberate: the ratchet cannot tell a move from
+new debt, and a move is a cheap moment to pay it. The failure names the
+removed entry with the same method, so the cause is plain.
+
 Improvements warn rather than fail: a baselined handler that now audits,
 or one whose route was renamed away, prints a notice asking you to
 tighten. Failing a PR for improving coverage teaches contributors that

@@ -140,6 +140,17 @@ export function runGrowth(cfg, baseRef, { configPath = DEFAULT_CONFIG_PATH, cwd 
     err('');
     for (const k of r.added) err(`  ${k}`);
     err('');
+    const method = (k) => k.slice(k.lastIndexOf('::') + 2);
+    const moved = r.removed.filter((k) => r.added.some((a) => method(a) === method(k)));
+    if (moved.length > 0) {
+      err(`It also removes ${moved.length} entr${moved.length === 1 ? 'y' : 'ies'} for the same method:`);
+      err('');
+      for (const k of moved) err(`  ${k}`);
+      err('');
+      err('If a route moved, its key moved with it, and a new path is new debt to the ratchet.');
+      err('Pay it at the new path: an audit write, or a justified exemption.');
+      err('');
+    }
     err('The baseline records debt that predates the rule; it is not a place to put new');
     err('debt. Give these handlers an audit write instead. If a mutation genuinely is not');
     err(`security-relevant, exempt it at the handler with a block comment containing`);
